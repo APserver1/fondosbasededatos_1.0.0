@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+    background-attachment: fixed;
+    background-color: #f8fafc; /* Fallback lighter color for light mode feel with dark accents, or just keep it light */
+  }
+  /* Let's try a lighter, cleaner futuristic look as requested "transparencies" implies light/glass usually */
+  body {
+    background-color: #f0f8ff;
+    background-image: 
+      radial-gradient(at 40% 20%, rgba(56, 189, 248, 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(14, 165, 233, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  html.dark body {
+    background-color: #0f172a;
+    color: #f1f5f9;
+    background-image: 
+      radial-gradient(at 40% 20%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(14, 165, 233, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .form-input {
+    @apply block w-full px-3 py-2 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/80;
+  }
+  
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-xl;
+  }
+  
+  .glass-button {
+    @apply bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg shadow-sky-500/30 transition-all duration-300 hover:shadow-sky-500/50 hover:-translate-y-0.5 active:translate-y-0;
+  }
+  
+  .glass-button-secondary {
+    @apply bg-white/80 hover:bg-white text-gray-700 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm;
+  }
+
+  .glass-header {
+    @apply bg-white/80 backdrop-blur-lg border-b border-white/20 shadow-sm sticky top-0 z-40;
+  }
+}
+
+@layer utilities {
+  .table-cell-align {
+    @apply text-center px-4;
+  }
+  
+  .numeric-cell {
+    @apply text-right px-4;
+  }
+  @media print {
+    .print-container {
+      max-height: none !important;
+      overflow: visible !important;
+      height: auto !important;
+      display: block !important;
+    }
+    
+    /* Force parents to show all content */
+    body, #root, main, .bg-white\/95, .glass-panel {
+      overflow: visible !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      background: white !important;
+    }
+
+    /* Hide UI elements that shouldn't be printed */
+    header, nav, button, .print\:hidden {
+      display: none !important;
+    }
+
+    /* Ensure table spans pages correctly */
+    table {
+      table-layout: auto !important;
+      width: 100% !important;
+      border-collapse: collapse !important;
+    }
+
+    tr {
+      page-break-inside: avoid !important;
+    }
+  }
+}
