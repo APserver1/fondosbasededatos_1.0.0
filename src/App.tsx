@@ -128,6 +128,8 @@ function App() {
   const [selectedRangeType, setSelectedRangeType] = useState<'all' | 'incomes' | 'expenses'>('all');
   const [selectedRangeYear, setSelectedRangeYear] = useState<number>(new Date().getFullYear());
   const [selectedUnitReportYear, setSelectedUnitReportYear] = useState<number>(new Date().getFullYear());
+  const [useEntryDateForReports, setUseEntryDateForReports] = useState<boolean>(false);
+  const [useEntryDateForUnitReport, setUseEntryDateForUnitReport] = useState<boolean>(false);
   const [unitReportResults, setUnitReportResults] = useState<CombinedTransaction[]>([]);
   const [showUnitBreakdown, setShowUnitBreakdown] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -212,6 +214,20 @@ function App() {
       .filter((y): y is number => typeof y === 'number' && y > 0);
     return Array.from(new Set(years)).sort((a, b) => b - a);
   }, [savedCuts]);
+  const entryDateYears = useMemo(() => {
+    const years = savedCuts
+      .map(c => new Date(c.date).getFullYear())
+      .filter(y => Number.isFinite(y) && y > 0);
+    return Array.from(new Set(years)).sort((a, b) => b - a);
+  }, [savedCuts]);
+  const reportAvailableYears = useMemo(
+    () => (useEntryDateForReports ? entryDateYears : consolidatedYears),
+    [useEntryDateForReports, entryDateYears, consolidatedYears]
+  );
+  const unitReportAvailableYears = useMemo(
+    () => (useEntryDateForUnitReport ? entryDateYears : consolidatedYears),
+    [useEntryDateForUnitReport, entryDateYears, consolidatedYears]
+  );
 
   const consolidatedEstablishments = useMemo(() => {
     const y = selectedYear || new Date().getFullYear();
@@ -332,7 +348,9 @@ function App() {
 
         if (selectedUnitReportYear > 0) {
           filtered = filtered.filter(cut => {
-             const cutYear = cut.year || new Date(cut.date).getFullYear();
+             const cutYear = useEntryDateForUnitReport
+               ? new Date(cut.date).getFullYear()
+               : (toFiniteNumberOrUndefined(cut.year) ?? -1);
              return cutYear === selectedUnitReportYear;
           });
         }
@@ -349,7 +367,7 @@ function App() {
       }
     };
     fetchUnitReportData();
-  }, [activeTab, selectedCutNumber, selectedType, selectedUnitReportYear]);
+  }, [activeTab, selectedCutNumber, selectedType, selectedUnitReportYear, useEntryDateForUnitReport]);
 
 
   useEffect(() => {
@@ -682,7 +700,12 @@ function App() {
 
         // Apply year filter for reports tab
         if (activeTab === 'reports' && selectedReportYear > 0) {
-            filtered = filtered.filter(cut => cut.year === selectedReportYear);
+            filtered = filtered.filter(cut => {
+              const cutYear = useEntryDateForReports
+                ? new Date(cut.date).getFullYear()
+                : (toFiniteNumberOrUndefined(cut.year) ?? -1);
+              return cutYear === selectedReportYear;
+            });
         }
 
         // Duplicate detection and marking (applies to individual transactions before summarization)
@@ -827,7 +850,7 @@ function App() {
     };
 
     applyFiltersAndFetch();
-  }, [savedCuts, activeTab, selectedEstablishment, selectedMonth, selectedCode, selectedCutNumber, selectedType, startCutNumber, endCutNumber, showCutRange, searchQuery, showDuplicates, selectedReportYear, showSummarizedReport, specificCutNumbers, showSpecificCutsFilter]);
+  }, [savedCuts, activeTab, selectedEstablishment, selectedMonth, selectedCode, selectedCutNumber, selectedType, startCutNumber, endCutNumber, showCutRange, searchQuery, showDuplicates, selectedReportYear, showSummarizedReport, specificCutNumbers, showSpecificCutsFilter, useEntryDateForReports]);
 
   const handleRemoveRow = (id: string) => {
     setRows(prev => prev.filter(row => row.id !== id));
@@ -1219,8 +1242,8 @@ function App() {
                   onChange={(e) => setSelectedUnitReportYear(Number(e.target.value))}
                   className="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                 >
-                  {consolidatedYears.length > 0 ? (
-                    consolidatedYears.map(year => (
+                  {unitReportAvailableYears.length > 0 ? (
+                    unitReportAvailableYears.map(year => (
                       <option key={year} value={year}>{year}</option>
                     ))
                   ) : (
@@ -1254,6 +1277,17 @@ function App() {
                     className="mr-2"
                   />
                   Deslozar total
+                </label>
+              </div>
+              <div className="flex items-end">
+                <label className="inline-flex items-center text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={useEntryDateForUnitReport}
+                    onChange={(e) => setUseEntryDateForUnitReport(e.target.checked)}
+                    className="mr-2"
+                  />
+                  Usar Fecha de Ingreso
                 </label>
               </div>
 
@@ -2381,7 +2415,7 @@ function App() {
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                   >
                     <option value="0">Todos los años</option>
-                    {Array.from(new Set(savedCuts.map(cut => cut.year))).sort((a, b) => (b || 0) - (a || 0)).map(year => (
+                  {reportAvailableYears.map(year => (
                       <option key={year} value={year}>{year}</option>
                     ))}
                   </select>
@@ -2434,6 +2468,18 @@ function App() {
                   </label>
                 </div>
 
+                <div className="flex items-center mt-6">
+                  <input
+                    id="entry-date-year-toggle"
+                    type="checkbox"
+                    checked={useEntryDateForReports}
+                    onChange={(e) => setUseEntryDateForReports(e.target.checked)}
+                    className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="entry-date-year-toggle" className="ml-2 block text-sm text-gray-900">
+                    Usar Fecha de Ingreso
+                  </label>
+                </div>
                 <div className="flex items-center mt-6">
                   <input
                     id="specific-cuts-toggle"
