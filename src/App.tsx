@@ -127,6 +127,7 @@ function App() {
   const [rangeResults, setRangeResults] = useState<CombinedTransaction[]>([]);
   const [selectedRangeType, setSelectedRangeType] = useState<'all' | 'incomes' | 'expenses'>('all');
   const [selectedRangeYear, setSelectedRangeYear] = useState<number>(new Date().getFullYear());
+  const [useEntryDateForRangeReport, setUseEntryDateForRangeReport] = useState<boolean>(false);
   const [selectedUnitReportYear, setSelectedUnitReportYear] = useState<number>(new Date().getFullYear());
   const [useEntryDateForReports, setUseEntryDateForReports] = useState<boolean>(false);
   const [useEntryDateForUnitReport, setUseEntryDateForUnitReport] = useState<boolean>(false);
@@ -223,6 +224,10 @@ function App() {
   const reportAvailableYears = useMemo(
     () => (useEntryDateForReports ? entryDateYears : consolidatedYears),
     [useEntryDateForReports, entryDateYears, consolidatedYears]
+  );
+  const rangeReportAvailableYears = useMemo(
+    () => (useEntryDateForRangeReport ? entryDateYears : consolidatedYears),
+    [useEntryDateForRangeReport, entryDateYears, consolidatedYears]
   );
   const unitReportAvailableYears = useMemo(
     () => (useEntryDateForUnitReport ? entryDateYears : consolidatedYears),
@@ -321,7 +326,9 @@ function App() {
         let filtered = fetchedData;
         if (selectedRangeYear > 0) {
           filtered = filtered.filter(cut => {
-            const cutYear = cut.year || new Date(cut.date).getFullYear();
+            const cutYear = useEntryDateForRangeReport
+              ? new Date(cut.date).getFullYear()
+              : (toFiniteNumberOrUndefined(cut.year) ?? -1);
             return cutYear === selectedRangeYear;
           });
         }
@@ -337,7 +344,7 @@ function App() {
       }
     };
     fetchRangeReportData();
-  }, [rangeStart, rangeEnd, selectedRangeType, selectedRangeYear]);
+  }, [rangeStart, rangeEnd, selectedRangeType, selectedRangeYear, useEntryDateForRangeReport]);
 
   useEffect(() => {
     const fetchUnitReportData = async () => {
@@ -3091,7 +3098,7 @@ function App() {
                 onChange={e => setSelectedRangeYear(parseInt(e.target.value))}
                 className="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
               >
-                {(consolidatedYears.length > 0 ? consolidatedYears : [new Date().getFullYear()]).map(year => (
+                {(rangeReportAvailableYears.length > 0 ? rangeReportAvailableYears : [new Date().getFullYear()]).map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
@@ -3107,6 +3114,17 @@ function App() {
                     <option value="incomes">Solo ingresos</option>
                     <option value="expenses">Solo egresos</option>
                   </select>
+                </div>
+                <div className="flex items-end">
+                  <label className="inline-flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={useEntryDateForRangeReport}
+                      onChange={(e) => setUseEntryDateForRangeReport(e.target.checked)}
+                      className="mr-2"
+                    />
+                    Usar Fecha de Ingreso
+                  </label>
                 </div>
               </div>
               {rangeResults.length > 0 ? (
