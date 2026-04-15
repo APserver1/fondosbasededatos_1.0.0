@@ -36,8 +36,9 @@ export function TermsPage() {
             <p className="mt-2">Cualquier mal uso de la Aplicación será responsabilidad exclusiva del usuario, quedando A.P Company exenta de cualquier consecuencia derivada.</p>
           </div>
           <div>
-            <p className="font-semibold text-gray-800">5. Propiedad de la Información</p>
-            <p>Toda la información almacenada en la Aplicación es propiedad única y exclusiva de la Región Sanitaria Departamental de Cortés. A.P Company no tiene ningún derecho de uso, acceso externo, reproducción o modificación de dicha información, ni se hace responsable por la eliminación accidental o intencionada de datos por parte del personal de la entidad.</p>
+            <p className="font-semibold text-gray-800">5. Propiedad Intelectual y Licencia de Uso</p>
+            <p>El software, código fuente, diseño, estructura y marca "Base de Datos de Fondos Recuperados" son propiedad intelectual exclusiva de A.P Company. La Región Sanitaria Departamental de Cortés cuenta únicamente con una licencia de uso temporal y precaria, concedida a título gratuito hasta la fecha del 30 de marzo de 2026. La plataforma "Base de datos de Fondos Recuperados" es una obra original creada de forma independiente por A.P Company. El código fuente, la arquitectura de la base de datos y la interfaz de usuario son propiedad exclusiva del desarrollador. El uso de la plataforma por parte de la Región Sanitaria Departamental de Cortés se considera una concesión de uso temporal y precaria. El uso continuado después del 30 de marzo de 2026 no implica transferencia de propiedad intelectual alguna.</p>
+            <p>A partir de esta fecha, la continuidad del servicio estará sujeta a la firma de un contrato de prestación de servicios o licenciamiento formal. La titularidad de los datos ingresados pertenece a la institución, pero el acceso a los mismos a través de esta plataforma está condicionado a la vigencia de la licencia otorgada por A.P Company.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">6. Limitación de Responsabilidad</p>
@@ -49,13 +50,16 @@ export function TermsPage() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold text-gray-800">7. Mantenimiento y Soporte Técnico</p>
+            <p className="font-semibold text-gray-800">7. Continuidad, Soporte y Suspensión del Servicio</p>
             <p>A.P Company brinda:</p>
             <ul className="list-disc list-inside ml-5 mt-1 space-y-1">
               <li>Soporte técnico inmediato ante fallos técnicos o dudas de uso.</li>
               <li>Actualizaciones periódicas para asegurar el correcto funcionamiento del sistema.</li>
             </ul>
             <p className="mt-2">Sin embargo, A.P Company se reserva el derecho de finalizar el soporte y las actualizaciones de la Aplicación previa notificación escrita a la Región Sanitaria.</p>
+            <p className="mt-2">Se hace constar que la Aplicación no reside en servidores gubernamentales. El costo de mantenimiento, almacenamiento en la nube y disponibilidad del servicio es costeado íntegramente por A.P Company.</p>
+            <p className="mt-2">Suspensión por falta de acuerdo: A.P Company se reserva el derecho de suspender el acceso al servicio de manera total o parcial si no se formaliza un acuerdo de compensación económica o de permanencia laboral que justifique el soporte técnico y el gasto de infraestructura.</p>
+            <p className="mt-2">Restricción de datos: En caso de suspensión por falta de pago o acuerdo, el acceso a la consulta de datos históricos (2021-2026) y la carga de nueva información quedará inhabilitado hasta que las partes alcancen un convenio satisfactorio.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">8. Seguridad de la Información</p>
@@ -77,6 +81,14 @@ export function TermsPage() {
             <p className="font-semibold text-gray-800">11. Contacto</p>
             <p>Para soporte técnico o consultas sobre estos términos, puede contactarse a:</p>
             <p><a href="mailto:a.p.companyentertaiment@gmail.com" className="text-indigo-600 hover:text-indigo-700">a.p.companyentertaiment@gmail.com</a></p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">12. Compensación y Regularización</p>
+            <p>Dado que la plataforma ha operado desde el 5 de marzo de 2025 sin costo para la region de manera temporal, cualquier uso posterior al 30 de marzo de 2026 requiere una regularización mediante un contrato de servicios profesionales que contemple el mantenimiento preventivo, soporte técnico y el costo de infraestructura de servidores. El incumplimiento en la formalización de este acuerdo facultará a A.P Company para proceder al cierre técnico de la plataforma.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">13. Compensación por Servicios Prestados</p>
+            <p>A partir de la presente actualización, el uso de la plataforma conlleva la obligación de negociar una tarifa de licenciamiento o, en su defecto, el reconocimiento de una compensación por el servicio de soporte y alojamiento brindado de forma gratuita durante los últimos dos años. La falta de resolución sobre este punto facultará a A.P Company para proceder con la desconexión del servicio previa notificación de 24 horas.</p>
           </div>
           <div className="mt-6 flex justify-center">
             <img src="https://i.imgur.com/xuE4EiP.jpeg" alt="Información Adicional o Sello" style={{ maxWidth: '200px', maxHeight: '150px' }} />
