@@ -91,7 +91,7 @@ export function TermsPage() {
             <p>A partir de la presente actualización, el uso de la plataforma conlleva la obligación de negociar una tarifa de licenciamiento o, en su defecto, el reconocimiento de una compensación por el servicio de soporte y alojamiento brindado de forma gratuita durante los últimos dos años. La falta de resolución sobre este punto facultará a A.P Company para proceder con la desconexión del servicio previa notificación de 24 horas.</p>
           </div>
           <div className="mt-6 flex justify-center">
-            <img src="https://i.imgur.com/xuE4EiP.jpeg" alt="Información Adicional o Sello" style={{ maxWidth: '200px', maxHeight: '150px' }} />
+            <img src=".\A.P Company ©.jpg" alt="Entertaiment and Services" style={{ maxWidth: '200px', maxHeight: '150px' }} />
           </div>
         </div>
       </div>
