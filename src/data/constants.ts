@@ -48,6 +48,7 @@ export const incomeCodes: IncomeCodeType[] = [
   { code: '27210', description: 'TASAS' },
   { code: '29100', description: 'CEREMONIAL Y PROTOCOLO' },
   { code: '29200', description: 'SERVICIO DE VIGILANCIA' },
+  { code: '24140', description: 'SERVICIOS SOCIALES' },
   { code: '31110', description: 'PRODUCTOS ALIMENTICIOS Y BEBIDAS' },
   { code: '31300', description: 'PRODUCTOS PECUARIOS' },
   { code: '31500', description: 'MADERA, CORCHO Y SUS MANUFACTURAS' },
