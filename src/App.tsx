@@ -1697,7 +1697,11 @@ function App() {
                                   type="text"
                                   list="income-codes"
                                   value={row.code}
-                                  onChange={(e) => handleRowChange(row.id, 'code', e.target.value)}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const codePart = val.includes(' - ') ? val.split(' - ')[0] : val;
+                                    handleRowChange(row.id, 'code', codePart);
+                                  }}
                                   onKeyDown={(e) => handleKeyDown(e, absIndex, 3)}
                                   data-row={absIndex}
                                   data-field="code"
@@ -1798,7 +1802,7 @@ function App() {
 
                     <datalist id="income-codes">
                       {incomeCodes.map(code => (
-                        <option key={code.code} value={code.code} />
+                        <option key={code.code} value={`${code.code} - ${code.description}`} />
                       ))}
                     </datalist>
 
