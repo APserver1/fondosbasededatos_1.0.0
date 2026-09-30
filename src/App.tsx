@@ -85,7 +85,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
-  const [codeTotals, setCodeTotals] = useState<Array<{code: string; description: string; total: number}>>([]);
   const [filteredCuts, setFilteredCuts] = useState<CombinedTransaction[]>([]);
   const [selectedEstablishment, setSelectedEstablishment] = useState<string>('');
   const [establishmentSearch, setEstablishmentSearch] = useState('');
@@ -168,6 +167,38 @@ function App() {
     incomeCodes.forEach(ic => m.set(ic.code, ic.description));
     return m;
   }, []);
+  const codeTotals = useMemo(() => {
+    if (!selectedEstablishment) return [];
+
+    const totals = new Map<string, { code: string; description: string; monthlyTotals: number[]; total: number }>();
+    for (const cut of savedCuts) {
+      if (cut.establishment?.name !== selectedEstablishment || cut.year !== selectedEstablishmentYear) continue;
+      if (selectedEstablishmentType === 'Ingresos' && !cut.is_income) continue;
+      if (selectedEstablishmentType === 'Egresos' && cut.is_income) continue;
+
+      const monthIndex = cut.month - 1;
+      if (!Number.isInteger(monthIndex) || monthIndex < 0 || monthIndex >= 12) continue;
+
+      const code = cut.is_income ? 'Ingreso' : cut.code;
+      const description = cut.is_income
+        ? cut.income_code?.description || cut.income_type?.name || 'Ingreso General'
+        : incomeCodeMap.get(code) || cut.income_code?.description || code;
+      const key = cut.is_income ? `income:${description}` : `expense:${code}`;
+      let entry = totals.get(key);
+      if (!entry) {
+        entry = { code, description, monthlyTotals: Array(12).fill(0), total: 0 };
+        totals.set(key, entry);
+      }
+      entry.monthlyTotals[monthIndex] += cut.amount;
+      entry.total += cut.amount;
+    }
+
+    return Array.from(totals.values()).sort((a, b) => {
+      if (a.code === 'Ingreso' && b.code !== 'Ingreso') return 1;
+      if (a.code !== 'Ingreso' && b.code === 'Ingreso') return -1;
+      return a.description.localeCompare(b.description);
+    });
+  }, [savedCuts, selectedEstablishment, selectedEstablishmentYear, selectedEstablishmentType, incomeCodeMap]);
   const [showSummarizedReport, setShowSummarizedReport] = useState<boolean>(false); // Nuevo estado para la opción de resumir
   const [showSpecificCutsFilter, setShowSpecificCutsFilter] = useState<boolean>(false);
   const [specificCutNumbers, setSpecificCutNumbers] = useState<number[]>([]);
@@ -2073,85 +2104,8 @@ function App() {
                 {/* Selector de Establecimiento */}
                 <select
                   className="block w-64 px-3 py-2 text-sm border rounded-md focus:ring-sky-500 focus:border-sky-500"
-                  onChange={(e) => {
-                    const selectedEst = e.target.value;
-                    setSelectedEstablishment(selectedEst); // Update selected establishment state
-
-                    if (selectedEst) {
-                      // Filter cuts by selected establishment AND selected year
-                      let establishmentCuts = savedCuts.filter(
-                        (cut) => cut.establishment?.name === selectedEst && cut.year === selectedEstablishmentYear
-                      );
-                      if (selectedEstablishmentType === 'Ingresos') {
-                        establishmentCuts = establishmentCuts.filter(c => c.is_income);
-                      } else if (selectedEstablishmentType === 'Egresos') {
-                        establishmentCuts = establishmentCuts.filter(c => !c.is_income);
-                      }
-
-                      const codeTotals = [];
-
-                      // Process expense codes
-                      incomeCodes.forEach((code) => {
-                        const monthlyTotals = Array(12).fill(0);
-                        let total = 0;
-
-                        establishmentCuts
-                          .filter((cut) => !cut.is_income && cut.code === code.code)
-                          .forEach((cut) => {
-                            const amount = cut.amount;
-                            const mi = (cut.month || 0) - 1;
-                            if (mi >= 0) monthlyTotals[mi] += amount;
-                            total += amount;
-                          });
-
-                        if (total !== 0) { // Only add if there's actual data
-                          codeTotals.push({
-                            code: code.code,
-                            description: code.description,
-                            monthlyTotals: monthlyTotals,
-                            total: total,
-                          });
-                        }
-                      });
-
-                      // Process income types
-                      const incomeTypesMap = new Map();
-                      establishmentCuts
-                        .filter((cut) => cut.is_income)
-                        .forEach((cut) => {
-                          const incomeTypeDescription = cut.income_code?.description || 'Desconocido';
-                          if (!incomeTypesMap.has(incomeTypeDescription)) {
-                            incomeTypesMap.set(incomeTypeDescription, {
-                              code: 'Ingreso',
-                              description: incomeTypeDescription,
-                              monthlyTotals: Array(12).fill(0),
-                              total: 0,
-                            });
-                          }
-                          const incomeEntry = incomeTypesMap.get(incomeTypeDescription);
-                          const mi = (cut.month || 0) - 1;
-                          if (mi >= 0) incomeEntry.monthlyTotals[mi] += cut.amount;
-                          incomeEntry.total += cut.amount;
-                        });
-
-                      incomeTypesMap.forEach((value) => codeTotals.push(value));
-
-                      // Sort codeTotals alphabetically, with incomes appearing after expenses
-                      codeTotals.sort((a, b) => {
-                        const isAIncome = a.code === 'Ingreso';
-                        const isBIncome = b.code === 'Ingreso';
-
-                        if (isAIncome && !isBIncome) return 1;
-                        if (!isAIncome && isBIncome) return -1;
-
-                        return a.description.localeCompare(b.description);
-                      });
-
-                      setCodeTotals(codeTotals);
-                    } else {
-                      setCodeTotals([]);
-                    }
-                  }}
+                  value={selectedEstablishment}
+                  onChange={(e) => setSelectedEstablishment(e.target.value)}
                 >
                   <option value="">Seleccionar Establecimiento</option>
                   {establishments.map((establishment) => (
@@ -2168,57 +2122,7 @@ function App() {
                   <select
                     id="establishment-type-filter"
                     value={selectedEstablishmentType}
-                    onChange={(e) => {
-                      const type = e.target.value;
-                      setSelectedEstablishmentType(type);
-                      const selectedEst = selectedEstablishment;
-                      if (!selectedEst) return;
-                      let establishmentCuts = savedCuts.filter(
-                        (cut) => cut.establishment?.name === selectedEst && cut.year === selectedEstablishmentYear
-                      );
-                      if (type === 'Ingresos') establishmentCuts = establishmentCuts.filter(c => c.is_income);
-                      if (type === 'Egresos') establishmentCuts = establishmentCuts.filter(c => !c.is_income);
-                      const nextTotals = [] as Array<{code: string; description: string; monthlyTotals: number[]; total: number}>;
-                      if (type !== 'Ingresos') {
-                        incomeCodes.forEach((code) => {
-                          const monthlyTotals = Array(12).fill(0);
-                          let total = 0;
-                          establishmentCuts
-                            .filter((cut) => !cut.is_income && cut.code === code.code)
-                            .forEach((cut) => {
-                              const amount = cut.amount;
-                              const mi = (cut.month || 0) - 1;
-                              if (mi >= 0) monthlyTotals[mi] += amount;
-                              total += amount;
-                            });
-                          if (total !== 0) nextTotals.push({ code: code.code, description: code.description, monthlyTotals, total });
-                        });
-                      }
-                      if (type !== 'Egresos') {
-                        const incomeTypesMap = new Map<string, { code: string; description: string; monthlyTotals: number[]; total: number }>();
-                        establishmentCuts
-                          .filter((cut) => cut.is_income)
-                          .forEach((cut) => {
-                            const incomeTypeDescription = cut.income_code?.description || 'Desconocido';
-                            if (!incomeTypesMap.has(incomeTypeDescription)) {
-                              incomeTypesMap.set(incomeTypeDescription, { code: 'Ingreso', description: incomeTypeDescription, monthlyTotals: Array(12).fill(0), total: 0 });
-                            }
-                            const entry = incomeTypesMap.get(incomeTypeDescription)!;
-                            const mi = (cut.month || 0) - 1;
-                            if (mi >= 0) entry.monthlyTotals[mi] += cut.amount;
-                            entry.total += cut.amount;
-                          });
-                        incomeTypesMap.forEach(v => nextTotals.push(v));
-                      }
-                      nextTotals.sort((a, b) => {
-                        const ia = a.code === 'Ingreso';
-                        const ib = b.code === 'Ingreso';
-                        if (ia && !ib) return 1;
-                        if (!ia && ib) return -1;
-                        return a.description.localeCompare(b.description);
-                      });
-                      setCodeTotals(nextTotals);
-                    }}
+                    onChange={(e) => setSelectedEstablishmentType(e.target.value)}
                     className="block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                   >
                     <option value="">Todos</option>

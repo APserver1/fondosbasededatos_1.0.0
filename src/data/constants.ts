@@ -121,18 +121,10 @@ export const incomeCodes: IncomeCodeType[] = [
   { code: '42800', description: 'HERRAMIENTAS MAYORES' },
   { code: '39620', description: 'REPUESTOS Y ACCESORIOS ELECTRICOS' },
   { code: '39900', description: 'OTROS GASTO Y ACCESORIOS' },
-  { code: '41240', description: 'INSTALACIONES VARIAS' },
   { code: '42100', description: 'EQUIPO DE MEDICINA Y MUEBLES' },
-  { code: '42110', description: 'MUEBLES VARIOS DE OFICINA' },
-  { code: '42120', description: 'EQUIPOS VARIOS DE OFICINA' },
-  { code: '42140', description: 'ELECTRODOMESTICOS' },
   { code: '42200', description: 'MAQUINARIA Y EQUIPO DE PRODUCCION' },
   { code: '42210', description: 'MAQUINARIA Y EQUIPO DE CONSTRUCCION' },
-  { code: '42410', description: 'EQUIPO MEDICO SANITARIO Y HOSPITALARIO E INSTRUMENTAL' },
-  { code: '42420', description: 'EQUIPO DE LABORATORIO' },
-  { code: '42430', description: 'EQUIPO DE LABORATORIO NO MEDICO' },
   { code: '42500', description: 'EQUIPO DE COMUNICACION Y SEÑALAMIETO' },
-  { code: '42600', description: 'EQUIPO PARA COMPUTACION' },
   { code: '47210', description: 'CONSTRUCCIONES Y MEJORAS' }
 ];
 
