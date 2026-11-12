@@ -262,6 +262,10 @@ export function StatisticsPage({ data }: StatisticsPageProps) {
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      <div className="print-settings">
+        Estadísticas · Año del gráfico mensual: {selectedYear} · Gráfico personalizado: {customDataType === 'income' ? 'Ingresos' : customDataType === 'expense' ? 'Egresos' : 'Comparativa total'}
+        {' · Establecimientos: '}{selectedEstablishments.length === uniqueEstablishments.length ? 'Todos' : selectedEstablishments.join(', ') || 'Ninguno'}
+      </div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-blue-700">
@@ -594,7 +598,7 @@ export function StatisticsPage({ data }: StatisticsPageProps) {
               </p>
             </div>
             
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 print:hidden">
             {/* Selector de Tipo de Gráfico */}
             <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
               <button
@@ -644,7 +648,7 @@ export function StatisticsPage({ data }: StatisticsPageProps) {
 
         {/* Panel de Filtros */}
         {showFilters && (
-          <div className={`mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100 animate-fadeIn ${expandedChart === 'custom' ? 'print:hidden' : ''}`}>
+          <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100 animate-fadeIn print:hidden">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Filtrar por Establecimientos</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-40 overflow-y-auto custom-scrollbar">
               <button

@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@media screen {
+  .print-settings {
+    display: none;
+  }
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900;
@@ -72,6 +78,18 @@
     @apply text-right px-4;
   }
   @media print {
+    .print-settings {
+      display: block;
+      margin: 0 0 10px auto;
+      max-width: 100%;
+      text-align: right;
+      font-size: 8pt;
+      line-height: 1.35;
+      color: #374151;
+      overflow-wrap: anywhere;
+      break-inside: avoid;
+    }
+
     .print-container {
       max-height: none !important;
       overflow: visible !important;
@@ -108,5 +126,36 @@
     tr {
       page-break-inside: avoid !important;
     }
+
+    .summary-report-table {
+      table-layout: fixed !important;
+      min-width: 0 !important;
+    }
+
+    .summary-report-table th,
+    .summary-report-table td {
+      padding: 5px 6px !important;
+      font-size: 9pt !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+    }
+
+    .summary-report-table tr > :first-child:not([colspan]) {
+      visibility: hidden;
+    }
+
+    .summary-report-table thead th:first-child { width: 3%; }
+    .summary-report-table thead th:nth-child(2) { width: 12%; }
+    .summary-report-table thead th:nth-child(3) { width: 48%; }
+    .summary-report-table thead th:nth-child(4) { width: 20%; }
+    .summary-report-table thead th:nth-child(5) { width: 17%; }
+
+    .summary-report-table tr > :nth-child(5) {
+      white-space: nowrap !important;
+      overflow-wrap: normal;
+    }
+
+    .summary-report-table thead { display: table-header-group; }
+    .summary-report-table tfoot { display: table-row-group; }
   }
 }

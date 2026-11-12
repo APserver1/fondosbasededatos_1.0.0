@@ -1,4 +1,5 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { Building2, BarChart3, Plus, X, Loader2, MoreVertical, Trash2, Edit, Save, AlertTriangle } from 'lucide-react';
 import appLogo from '../Fondos_Base_de_Datos.png';
 import { useState, useEffect, useMemo, useRef, useTransition } from 'react';
@@ -8,6 +9,7 @@ import { StatisticsPage } from './components/StatisticsPage';
 // Settings import removed as unused
 import { SettingsPage } from './components/SettingsPage';
 import { supabase } from './lib/supabase';
+import { summarizeMonthlyCodes } from './lib/monthlyCodeSummary';
 // Cut type import removed as unused
 import { AlertCircle } from 'lucide-react';
 import { CombinedTransaction } from './types';
@@ -157,6 +159,11 @@ function App() {
   });
   const [showDuplicates, setShowDuplicates] = useState<boolean>(false); // Nuevo estado para el interruptor de duplicados
   const [orderSubtotalByMonth, setOrderSubtotalByMonth] = useState<boolean>(false);
+  const [summarizeByMonthCode, setSummarizeByMonthCode] = useState(false);
+  const monthlyCodeSummary = useMemo(
+    () => summarizeByMonthCode ? summarizeMonthlyCodes(filteredCuts, useEntryDateForReports) : [],
+    [filteredCuts, summarizeByMonthCode, useEntryDateForReports]
+  );
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState<boolean>(false);
@@ -308,7 +315,7 @@ function App() {
   }, [isModalOpen, isIncomeModalOpen]);
   const [isPrinting, setIsPrinting] = useState(false);
   useEffect(() => {
-    const handleBeforePrint = () => setIsPrinting(true);
+    const handleBeforePrint = () => flushSync(() => setIsPrinting(true));
     const handleAfterPrint = () => setIsPrinting(false);
     window.addEventListener('beforeprint', handleBeforePrint);
     window.addEventListener('afterprint', handleAfterPrint);
@@ -816,7 +823,7 @@ function App() {
         }
 
         // Summarization logic
-        if (showSummarizedReport && activeTab === 'reports') {
+        if (showSummarizedReport && !summarizeByMonthCode && activeTab === 'reports') {
             const summarizedMap = new Map<string, CombinedTransaction>();
 
             filtered.forEach(cut => {
@@ -888,7 +895,7 @@ function App() {
     };
 
     applyFiltersAndFetch();
-  }, [savedCuts, activeTab, selectedEstablishment, selectedMonth, selectedCode, selectedCutNumber, selectedType, startCutNumber, endCutNumber, showCutRange, searchQuery, showDuplicates, selectedReportYear, showSummarizedReport, specificCutNumbers, showSpecificCutsFilter, useEntryDateForReports]);
+  }, [savedCuts, activeTab, selectedEstablishment, selectedMonth, selectedCode, selectedCutNumber, selectedType, startCutNumber, endCutNumber, showCutRange, searchQuery, showDuplicates, selectedReportYear, showSummarizedReport, specificCutNumbers, showSpecificCutsFilter, useEntryDateForReports, summarizeByMonthCode, orderSubtotalByMonth, searchOptions]);
 
   const handleRemoveRow = (id: string) => {
     setRows(prev => prev.filter(row => row.id !== id));
@@ -1146,6 +1153,43 @@ function App() {
     return <AuthForm onSuccess={() => setShowAuthForm(false)} />;
   }
 
+  const printSettings = (() => {
+    const year = (value: number) => `Año: ${value || 'Todos'}`;
+    const dateBasis = (entryDate: boolean) => `Fecha: ${entryDate ? 'de ingreso' : 'del consolidado'}`;
+    switch (activeTab) {
+      case 'reports':
+        return [
+          'Reporte', year(selectedReportYear), `Tipo: ${selectedType || 'Todos'}`,
+          `Establecimientos: ${selectedEstablishment || preSummaryEstablishments.join(', ') || 'Todos'}`,
+          `Mes: ${selectedMonth ? new Date(2024, selectedMonth - 1).toLocaleString('es-HN', { month: 'long' }) : 'Todos'}`,
+          selectedCode && `Código: ${selectedCode}`,
+          showSpecificCutsFilter && specificCutNumbers.length > 0
+            ? `Cortes: ${specificCutNumbers.join(', ')}`
+            : showCutRange ? `Cortes: ${startCutNumber || 'Inicio'}–${endCutNumber || 'Fin'}`
+            : `Corte: ${selectedCutNumber || 'Todos'}`,
+          dateBasis(useEntryDateForReports), summarizeByMonthCode ? 'Resumir y subtotalizar por mes codificado' : showSummarizedReport ? 'Resumido por código' : 'Detallado',
+          showDuplicates && 'Mostrar duplicados', orderSubtotalByMonth && 'Orden y subtotales por mes',
+        ].filter(Boolean).join(' · ');
+      case 'unitReport':
+        return ['Reporte por unidad', year(selectedUnitReportYear), `Corte: ${selectedCutNumber || 'Todos'}`,
+          `Tipo: ${selectedType || 'Todos'}`, dateBasis(useEntryDateForUnitReport),
+          showUnitBreakdown && 'Desglose por unidad'].filter(Boolean).join(' · ');
+      case 'rangeReport':
+        return ['Reporte de rango conjunto', `Cortes: ${rangeStart || 'Inicio'}–${rangeEnd || 'Fin'}`,
+          year(selectedRangeYear), `Tipo: ${selectedRangeType === 'incomes' ? 'Ingresos' : selectedRangeType === 'expenses' ? 'Egresos' : 'Todos'}`,
+          dateBasis(useEntryDateForRangeReport)].join(' · ');
+      case 'consolidated': return `Consolidado · ${year(selectedYear)}`;
+      case 'establishments':
+        return ['Establecimientos', year(selectedEstablishmentYear), selectedEstablishment || 'Todos los establecimientos',
+          `Tipo: ${selectedEstablishmentType || 'Todos'}`].join(' · ');
+      case 'cuts':
+        return ['Cortes', searchQuery && `Búsqueda: ${searchQuery}`,
+          searchQuery && `Buscar en: ${Object.entries(searchOptions).filter(([, enabled]) => enabled).map(([key]) => ({ date: 'Fecha', user: 'Usuario', cutNumber: 'Corte', establishment: 'Establecimiento', code: 'Código', description: 'Descripción', amount: 'Monto', month: 'Mes', year: 'Año' } as Record<string, string>)[key] || key).join(', ')}`
+        ].filter(Boolean).join(' · ');
+      default: return '';
+    }
+  })();
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -1250,12 +1294,13 @@ function App() {
 
       {/* Main Content */}
       <main className="py-6 sm:px-6 lg:px-8">
+        {printSettings && <div className="print-settings">{printSettings}</div>}
         {activeTab === 'statistics' && <StatisticsPage data={savedCuts} />}
         {activeTab === 'settings' && <SettingsPage />}
         {activeTab === 'terms' && <TermsPage />}
         {activeTab === 'unitReport' && (
           <div className="space-y-6">
-            <div className="flex gap-4 mb-6">
+            <div className="flex gap-4 mb-6 print:hidden">
               <div>
                 <label htmlFor="cut-number-filter" className="block text-sm font-medium text-gray-700 mb-1">
                   Corte
@@ -1544,7 +1589,7 @@ function App() {
 
         {/* Placeholder content - we'll implement these components next */}
         {activeTab === 'cuts' && (
-          <div className="flex gap-2 mb-4 relative items-center">
+          <div className="flex gap-2 mb-4 relative items-center print:hidden">
             <button
               onClick={() => {
                 setIsIncomeModalOpen(true);
@@ -2083,7 +2128,7 @@ function App() {
           )}
           {activeTab === 'establishments' && (
             <div className="space-y-6">
-              <div className="flex justify-end gap-4">
+              <div className="flex justify-end gap-4 print:hidden">
                 {/* Selector de año para la pestaña de Establecimientos */}
                 <div>
                   <label htmlFor="establishment-year-filter" className="block text-sm font-medium text-gray-700 mb-1">
@@ -2202,7 +2247,7 @@ function App() {
           )}
           {activeTab === 'reports' && (
             <div>
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 print:hidden">
 
                 <div>
                   <label htmlFor="establishment-filter" className="block text-sm font-medium text-gray-700 mb-1">
@@ -2470,7 +2515,10 @@ function App() {
                     id="summarize-toggle"
                     type="checkbox"
                     checked={showSummarizedReport}
-                    onChange={(e) => setShowSummarizedReport(e.target.checked)}
+                    onChange={(e) => {
+                      setShowSummarizedReport(e.target.checked);
+                      if (e.target.checked) setSummarizeByMonthCode(false);
+                    }}
                     className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
                   />
                   <label htmlFor="summarize-toggle" className="ml-2 block text-sm text-gray-900">
@@ -2483,11 +2531,33 @@ function App() {
                     id="order-month-subtotal-toggle"
                     type="checkbox"
                     checked={orderSubtotalByMonth}
-                    onChange={(e) => setOrderSubtotalByMonth(e.target.checked)}
+                    onChange={(e) => {
+                      setOrderSubtotalByMonth(e.target.checked);
+                      if (e.target.checked) setSummarizeByMonthCode(false);
+                    }}
                     className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
                   />
                   <label htmlFor="order-month-subtotal-toggle" className="ml-2 block text-sm text-gray-900">
                     Ordenar y Subtotalizar por Mes
+                  </label>
+                </div>
+
+                <div className="flex items-center mt-6">
+                  <input
+                    id="summarize-month-code-toggle"
+                    type="checkbox"
+                    checked={summarizeByMonthCode}
+                    onChange={(e) => {
+                      setSummarizeByMonthCode(e.target.checked);
+                      if (e.target.checked) {
+                        setShowSummarizedReport(false);
+                        setOrderSubtotalByMonth(false);
+                      }
+                    }}
+                    className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="summarize-month-code-toggle" className="ml-2 block text-sm text-gray-900">
+                    Resumir y subtotalizar por mes codificado
                   </label>
                 </div>
 
@@ -2501,9 +2571,9 @@ function App() {
 
               {filteredCuts.length > 0 ? (
                 <div className={`overflow-x-auto ${isPrinting ? '' : 'max-h-[600px] overflow-y-auto'} print-container`} onScroll={onCutsScroll} ref={cutsContainerRef}>
-                  <table className="min-w-full divide-y divide-gray-200 text-xs">
+                  <table className={`min-w-full divide-y divide-gray-200 text-xs ${showSummarizedReport || summarizeByMonthCode ? 'summary-report-table' : ''}`}>
                     <thead className="bg-gray-50">
-                      {showSummarizedReport ? (
+                      {showSummarizedReport || summarizeByMonthCode ? (
                         <tr>
                           <th scope="col" className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                           <th scope="col" className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código/Tipo</th>
@@ -2527,7 +2597,29 @@ function App() {
                       )}
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {showSummarizedReport ? (
+                      {summarizeByMonthCode ? monthlyCodeSummary.map(group => {
+                        const label = `${group.month ? new Date(2024, group.month - 1).toLocaleString('es-HN', { month: 'long' }) : 'Sin mes'}${group.year ? ` ${group.year}` : ''}`;
+                        return (
+                          <React.Fragment key={group.key}>
+                            <tr className="bg-sky-50">
+                              <td colSpan={5} className="px-3 py-2 text-sm font-semibold text-gray-900">{label}</td>
+                            </tr>
+                            {group.codes.map(({ key, cut, amount, establishments: names }) => (
+                              <tr key={key}>
+                                <td></td>
+                                <td className="px-3 py-2 text-sm text-gray-900">{cut.is_income ? 'Ingreso' : cut.code || 'Desconocido'}</td>
+                                <td className="px-3 py-2 text-sm text-gray-900">{cut.is_income ? cut.income_code?.description || 'Ingreso General' : incomeCodeMap.get(cut.code) || 'Desconocido'}</td>
+                                <td className="px-3 py-2 text-sm text-gray-900">{names.size === 1 ? [...names][0] : 'Varios'}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">{amount.toLocaleString('es-HN', { style: 'currency', currency: 'HNL' })}</td>
+                              </tr>
+                            ))}
+                            <tr className="bg-gray-50">
+                              <td colSpan={4} className="px-3 py-2 text-right text-sm font-bold text-gray-800">Subtotal {label}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-bold text-gray-800">{group.total.toLocaleString('es-HN', { style: 'currency', currency: 'HNL' })}</td>
+                            </tr>
+                          </React.Fragment>
+                        );
+                      }) : showSummarizedReport ? (
                         isPrinting ? (
                           filteredCuts.map((cut) => {
                             const summaryKey = cut.is_income ? `income-${cut.income_code?.description || ''}` : `expense-${cut.code || ''}`;
@@ -2551,6 +2643,7 @@ function App() {
                                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{cut.establishment?.name || 'Varios'}</td>
                                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">{cut.amount.toLocaleString('es-HN', { style: 'currency', currency: 'HNL' })}</td>
                                 </tr>
+                                {expandedSummaryCodes.includes(summaryKey) && (
                                 <tr>
                                   <td></td>
                                   <td colSpan={4} className="bg-gray-50 px-3 py-2 text-sm text-gray-700">
@@ -2568,6 +2661,7 @@ function App() {
                                     )}
                                   </td>
                                 </tr>
+                                )}
                               </React.Fragment>
                             );
                           })
@@ -2802,10 +2896,10 @@ function App() {
                       )}
                     </tbody>
                     {/* Totalizer Row */}
-                    {showSummarizedReport ? (
+                    {showSummarizedReport || summarizeByMonthCode ? (
                       <tfoot className="bg-gray-100 border-t-2 border-gray-300">
                         <tr>
-                          <td colSpan={3} className="px-3 py-2 text-right text-sm font-bold text-gray-800 uppercase tracking-wider">Total General:</td>
+                          <td colSpan={4} className="px-3 py-2 text-right text-sm font-bold text-gray-800 uppercase tracking-wider">Total General:</td>
                           <td className="px-3 py-2 text-right text-sm font-bold text-gray-800">
                             {filteredCuts.reduce((acc, cut) => acc + (cut.is_income ? cut.amount : -cut.amount), 0).toLocaleString('es-HN', { style: 'currency', currency: 'HNL', minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
@@ -2837,7 +2931,7 @@ function App() {
           )}
           {activeTab === 'consolidated' && (
             <div className={`bg-white shadow-sm rounded-lg overflow-x-auto ${isPrinting ? '' : 'max-h-[600px] overflow-y-auto'} print-container`}>
-              <div className="p-4">
+              <div className="p-4 print:hidden">
                 <label htmlFor="year-filter" className="block text-sm font-medium text-gray-700 mb-1">
                   Año
                 </label>
@@ -2978,7 +3072,7 @@ function App() {
           {activeTab === 'rangeReport' && (
             <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 shadow p-6">
               <h2 className="text-xl font-bold mb-4">Reporte de Rango Conjunto</h2>
-              <div className="flex gap-4 mb-6">
+              <div className="flex gap-4 mb-6 print:hidden">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Desde Corte</label>
                   <input
