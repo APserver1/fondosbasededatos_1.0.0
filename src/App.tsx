@@ -701,14 +701,6 @@ function App() {
             filtered = filtered.filter(cut => cut.establishment?.name === selectedEstablishment);
         }
 
-        // Guardar los cortes filtrados antes de resumir (¡antes de cualquier resumen o modificación!)
-        setPreSummaryCuts([...filtered]);
-
-        // Guardar los establecimientos únicos antes de resumir
-        setPreSummaryEstablishments(
-          Array.from(new Set(filtered.map(cut => cut.establishment?.name).filter((name): name is string => typeof name === 'string' && !!name)))
-        );
-
         // Apply search query filter
         if (searchQuery) {
             const lowerCaseQuery = searchQuery.toLowerCase();
@@ -753,6 +745,13 @@ function App() {
               return cutYear === selectedReportYear;
             });
         }
+
+        // Use the final filtered records for the print metadata and monthly details.
+        // Capture them before summarization replaces establishments and dates.
+        setPreSummaryCuts([...filtered]);
+        setPreSummaryEstablishments(
+          Array.from(new Set(filtered.map(cut => cut.establishment?.name).filter((name): name is string => typeof name === 'string' && !!name)))
+        );
 
         // Duplicate detection and marking (applies to individual transactions before summarization)
         if (showDuplicates) {
