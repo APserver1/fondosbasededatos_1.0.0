@@ -160,9 +160,10 @@ function App() {
   const [showDuplicates, setShowDuplicates] = useState<boolean>(false); // Nuevo estado para el interruptor de duplicados
   const [orderSubtotalByMonth, setOrderSubtotalByMonth] = useState<boolean>(false);
   const [summarizeByMonthCode, setSummarizeByMonthCode] = useState(false);
+  const [useEntryYearForMonthlySummary, setUseEntryYearForMonthlySummary] = useState(false);
   const monthlyCodeSummary = useMemo(
-    () => summarizeByMonthCode ? summarizeMonthlyCodes(filteredCuts, useEntryDateForReports) : [],
-    [filteredCuts, summarizeByMonthCode, useEntryDateForReports]
+    () => summarizeByMonthCode ? summarizeMonthlyCodes(filteredCuts, useEntryYearForMonthlySummary) : [],
+    [filteredCuts, summarizeByMonthCode, useEntryYearForMonthlySummary]
   );
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
@@ -1168,6 +1169,7 @@ function App() {
             : showCutRange ? `Cortes: ${startCutNumber || 'Inicio'}–${endCutNumber || 'Fin'}`
             : `Corte: ${selectedCutNumber || 'Todos'}`,
           dateBasis(useEntryDateForReports), summarizeByMonthCode ? 'Resumir y subtotalizar por mes codificado' : showSummarizedReport ? 'Resumido por código' : 'Detallado',
+          summarizeByMonthCode && `Año del resumen mensual: ${useEntryYearForMonthlySummary ? 'de ingreso de datos' : 'de los datos'}`,
           showDuplicates && 'Mostrar duplicados', orderSubtotalByMonth && 'Orden y subtotales por mes',
         ].filter(Boolean).join(' · ');
       case 'unitReport':
@@ -2560,6 +2562,23 @@ function App() {
                     Resumir y subtotalizar por mes codificado
                   </label>
                 </div>
+
+                {summarizeByMonthCode && (
+                  <div>
+                    <label htmlFor="monthly-summary-year-source" className="block text-sm font-medium text-gray-700 mb-1">
+                      Año de los encabezados y subtotales mensuales
+                    </label>
+                    <select
+                      id="monthly-summary-year-source"
+                      value={useEntryYearForMonthlySummary ? 'entry' : 'data'}
+                      onChange={(e) => setUseEntryYearForMonthlySummary(e.target.value === 'entry')}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                    >
+                      <option value="data">Año de los datos</option>
+                      <option value="entry">Año de ingreso de datos</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* Caja de establecimientos únicos (reales) como subtítulo informativo */}
                 {showSummarizedReport && !selectedEstablishment && preSummaryEstablishments.length > 0 && (
